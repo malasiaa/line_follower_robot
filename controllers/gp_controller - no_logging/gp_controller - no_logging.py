@@ -4,10 +4,11 @@ import time
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from utils.config import GENERATIONS, POP_SIZE, MAX_STEPS, TIME_STEP
+from utils.config import GENERATIONS, POP_SIZE, MAX_STEPS, TIME_STEP, SENSOR_THRESHOLD
 
 robot = Robot()
 
+"""
 # ——— Logging ———
 # Setup logging path
 project_path = robot.getProjectPath()
@@ -19,7 +20,7 @@ log_path = os.path.join(results_dir, "robot_log.txt")
 log_file = open(log_path, "w")
 sys.stdout = log_file
 sys.stderr = log_file
-
+"""
 
 # Map 3 binary sensor readings (l, c, r) to an index 0–7
 def sensors_to_index(l, c, r):
@@ -47,7 +48,7 @@ ir_left.enable(TIME_STEP)
 ir_center.enable(TIME_STEP)
 ir_right.enable(TIME_STEP)
 
-# ——— MAIN GA LOOP ———
+# ——— MAIN GA TEST LOOP ———
 def main_loop (generations, pop_size):
     loop_count = 0
     
@@ -59,10 +60,6 @@ def main_loop (generations, pop_size):
             print("[Robot] Sent READY")
             if robot.step(TIME_STEP) == -1:
                 quit(0)
-        
-        
-        #emitter.send("READY".encode("utf-8"))
-        #print("[Robot]   Sent READY")
         
         while receiver.getQueueLength() == 0:
             print("[Robot] Waiting genome...")
@@ -124,11 +121,11 @@ def main_loop (generations, pop_size):
         if loop_count == generations*pop_size : #Generations * popsize
             print("[Robot] Closing ebuck controller.")
             break
-    
+    """
     # ——— Flushing logs ———
     log_file.flush()
     log_file.close()
-
+    """
 
 generations, pop_size = GENERATIONS, POP_SIZE
 main_loop(generations, pop_size)

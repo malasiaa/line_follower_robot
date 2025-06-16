@@ -7,21 +7,30 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from utils.config import GENERATIONS, POP_SIZE, GENOME_SIZE, MAX_SPEED, TIME_STEP
 
-
 supervisor = Supervisor()
 
+"""
 # ——— Logging ———
 # Setup logging path
 project_path = supervisor.getProjectPath()
 results_dir = os.path.join(project_path, "results")
 os.makedirs(results_dir, exist_ok=True)
 
+
 # Open log file and redirect prints
 log_path = os.path.join(results_dir, "supervisor_log.txt")
 log_file = open(log_path, "w")
 sys.stdout = log_file
 sys.stderr = log_file
-
+"""
+"""
+# ——— GA Setup ———
+POP_SIZE = 10
+GENOME_SIZE = 16  # 8 pairs of speed (for right and left motors)
+GENERATIONS = 40
+MAX_SPEED = 6.28
+TIME_STEP = 32
+"""
 
 # Setting communication
 emitter = supervisor.getDevice("emitter")
@@ -108,8 +117,8 @@ def run_generation(population):
     """
     fitnesses = []
     # 1) Evaluate
-    for idx, genome in enumerate(population):
-        print(f"[Supervisor] Evaluating individual {idx}")
+    for ind_idx, genome in enumerate(population):
+        print(f"[Supervisor] Evaluating individual {ind_idx}")
         f = evaluate_genome(genome)
         fitnesses.append(f)
         if supervisor.step(TIME_STEP) == -1:
@@ -124,21 +133,22 @@ def run_generation(population):
     # 3) Build next generation (elitism + crossover + mutation)
     new_population = [best_genome, second_genome]
     while len(new_population) < POP_SIZE:
-        # Simple tournament among the top two
-        p1, p2 = random.sample([best_genome, second_genome], 2)
-        cp = random.randint(1, GENOME_SIZE - 1)
-        child = p1[:cp] + p2[cp:]
-        # mutation step
+        # Elitism - adding a bit of randomess p1,p2 = [best_gen, sec_gen] or [sec_gen, best_gen]
+        p1, p2 = random.sample(new_population, 2)
+        cp = random.randint(1, GENOME_SIZE - 1) # from 1 to 15 position to have at least of gene of each parent
+        # Crossover
+        child = p1[:cp] + p2[cp:] # new genome by slicing the two parents
+        # Mutation step
         for i in range(GENOME_SIZE):
-            if random.random() < 0.1:  # 10% mutation rate
-                child[i] += random.uniform(-1.0, 1.0)
-                child[i] = max(min(child[i], MAX_SPEED), -MAX_SPEED)
+            if random.random() < 0.1:  # 10% mutation rate for each gene
+                child[i] += random.uniform(-1.0, 1.0) # 
+                child[i] = max(min(child[i], MAX_SPEED), -MAX_SPEED) # result within allowed speed limits
                 if supervisor.step(TIME_STEP) == -1:
                     return 0.0
         new_population.append(child)
         if supervisor.step(TIME_STEP) == -1:
             return 0.0
-            
+    # 4) Return (new_population, best_fitness)        
     return new_population, best_fitness
 
 # ——— Variables to store  best results ———
@@ -176,8 +186,9 @@ with open(best_genome_path, "w") as f:
 
 print("[Supervisor] Best genome saved to 'best_genome.txt!'")
 
+"""
 # ——— Flushing logs ———
 log_file.flush()
 log_file.close()
-
+"""
 
