@@ -167,7 +167,7 @@ DEF Nice_Epuck E-puck {
   translation 0.08519994538743557 1.0979237955826167e-07 -6.497542027386095e-05
   rotation 2.200228898912202e-05 -0.9999981949463199 -0.0018998999977157018 0.00011026584975874844
   name "Nice_Epuck"
-  controller "gp_controller"
+  controller "gp_controller - no_logging"
   emitter_channel 4
   receiver_channel 3
   groundSensorsSlot [
@@ -226,6 +226,6 @@ DEF Supervisor Robot {
     }
   ]
   name "Supervisor"
-  controller "ga_supervisor"
+  controller "ga_supervisor - no_logging"
   supervisor TRUE
 }
