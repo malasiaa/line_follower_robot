@@ -4,7 +4,7 @@ import time
 # For logging
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(r'/home/malasiaa/Documents/Github/line_follower_mujoco')
 from utils.config import GENERATIONS, POP_SIZE, GENOME_SIZE, MAX_SPEED, TIME_STEP
 
 
@@ -69,9 +69,7 @@ def evaluate_genome(genome):
         
         # 3) Step and wait for “fitness:” reply for a fixed number of steps
         fitness = 0.0
-       
-        #print("Number of packets:", receiver.getQueueLength())
-        
+             
         while receiver.getQueueLength() > 0:
             receiver.nextPacket()
             if supervisor.step(TIME_STEP) == -1:
@@ -85,19 +83,18 @@ def evaluate_genome(genome):
         reply = receiver.getData()
         receiver.nextPacket()
         if reply.startswith("fitness:"):
-            fitness = float(reply.split(":")[1])
+            fitness = float(reply.split(",")[0].split(":")[1])
             print(f"[Supervisor] Fitness received: {fitness}")
-        # debug prints    
-        #print("AFTER THE AFTER")
-        #print("Number of packets:", receiver.getQueueLength())
-        
+            distance = float(reply.split(",")[1].split(":")[1])
+            print(f"[Supervisor] Distance received: {distance}")
+            
         # 4) Reset before returning
         supervisor.simulationResetPhysics()
         supervisor.simulationReset()
         supervisor.step(TIME_STEP)  # apply the reset
         break
         
-    return fitness
+    return fitness, distance
 
 def run_generation(population):
     """
@@ -107,10 +104,12 @@ def run_generation(population):
     4) Return (new_population, best_fitness)
     """
     fitnesses = []
+    distanceses = []
     # 1) Evaluate
     for idx, genome in enumerate(population):
         print(f"[Supervisor] Evaluating individual {idx}")
-        f = evaluate_genome(genome)
+        f, dist = evaluate_genome(genome)
+        distanceses.append(dist)
         fitnesses.append(f)
         if supervisor.step(TIME_STEP) == -1:
             return 0.0
@@ -119,8 +118,11 @@ def run_generation(population):
     ranked = sorted(zip(fitnesses, population), key=lambda x: x[0], reverse=True)
     best_fitness, best_genome = ranked[0]
     second_fitness, second_genome = ranked[1]
-    print(f"[Supervisor] Top fitness this gen = {best_fitness:.4f}")
-
+    print(f"[Supervisor] Top fitness this gen = {best_fitness:.4f}, {best_genome}")
+    ranked_dist = sorted(zip(distanceses, population), key=lambda x: x[0], reverse=True)
+    best_dist, dist_genome = ranked_dist[0]
+    print(f"[Supervisor] Top distance this gen = {best_dist:.4f}, {dist_genome}")
+    
     # 3) Build next generation (elitism + crossover + mutation)
     new_population = [best_genome, second_genome]
     while len(new_population) < POP_SIZE:
@@ -130,7 +132,7 @@ def run_generation(population):
         child = p1[:cp] + p2[cp:]
         # mutation step
         for i in range(GENOME_SIZE):
-            if random.random() < 0.1:  # 10% mutation rate
+            if random.random() < 0.1:  # mutation rate
                 child[i] += random.uniform(-1.0, 1.0)
                 child[i] = max(min(child[i], MAX_SPEED), -MAX_SPEED)
                 if supervisor.step(TIME_STEP) == -1:
@@ -176,7 +178,7 @@ with open(best_genome_path, "w") as f:
 
 print("[Supervisor] Best genome saved to 'best_genome.txt!'")
 
-# ——— Flushing logs ———
+# Flushing logs
 log_file.flush()
 log_file.close()
 

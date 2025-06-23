@@ -3,8 +3,8 @@ import time
 # For logging
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from utils.config import GENERATIONS, POP_SIZE, MAX_STEPS, TIME_STEP
+sys.path.append(r'/home/malasiaa/Documents/Github/line_follower_mujoco')
+from utils.config import GENERATIONS, POP_SIZE, MAX_STEPS, TIME_STEP, SENSOR_THRESHOLD
 
 robot = Robot()
 
@@ -19,7 +19,6 @@ log_path = os.path.join(results_dir, "robot_log.txt")
 log_file = open(log_path, "w")
 sys.stdout = log_file
 sys.stderr = log_file
-
 
 # Map 3 binary sensor readings (l, c, r) to an index 0–7
 def sensors_to_index(l, c, r):
@@ -39,31 +38,36 @@ emitter.setChannel(4)
 left_motor = robot.getDevice("left wheel motor")
 right_motor = robot.getDevice("right wheel motor")
 
+# IR sensors
 ir_left = robot.getDevice("gs0")
 ir_center = robot.getDevice("gs1")
 ir_right = robot.getDevice("gs2")
-
 ir_left.enable(TIME_STEP)
 ir_center.enable(TIME_STEP)
 ir_right.enable(TIME_STEP)
 
-# ——— MAIN GA LOOP ———
+# Motor position (to calculate distance)
+left_position_sensor = left_motor.getPositionSensor()
+right_position_sensor = right_motor.getPositionSensor()
+left_position_sensor.enable(TIME_STEP)
+right_position_sensor.enable(TIME_STEP)
+# To calculate distance
+WHEEL_RADIUS = 0.02
+
+# ——— MAIN LOOP ———
 def main_loop (generations, pop_size):
     loop_count = 0
     
     while robot.step(TIME_STEP) != -1:        
-        # Wait for genome
+        
         times_attempt = 2
         for _ in range(times_attempt):   # 2 steps = ~64 ms
             emitter.send("READY".encode("utf-8"))
             print("[Robot] Sent READY")
             if robot.step(TIME_STEP) == -1:
                 quit(0)
-        
-        
-        #emitter.send("READY".encode("utf-8"))
-        #print("[Robot]   Sent READY")
-        
+                
+        # Wait for genome
         while receiver.getQueueLength() == 0:
             print("[Robot] Waiting genome...")
             if robot.step(TIME_STEP) == -1:
@@ -79,6 +83,9 @@ def main_loop (generations, pop_size):
         left_motor.setPosition(float("inf"))
         right_motor.setPosition(float("inf"))
         
+        initial_left_position = left_position_sensor.getValue()
+        initial_right_position = right_position_sensor.getValue()
+
         # Evaluate genome
         max_steps = MAX_STEPS
         fitness = 0.0
@@ -108,16 +115,31 @@ def main_loop (generations, pop_size):
                 fitness += 1.0 + speed  # Bonus for tracking while fast
             elif l == 1 and r == 1:
                 fitness += 0.1  # Small reward for being close to the line
+            elif speed > 6:
+                fitness += 2
             else:
                 fitness -= 20  # Penalize for being completely off
         
             # Optional: cap fitness to avoid explosions
             fitness = max(fitness, 0)
             
-            print(f"[Robot] Step {step} | IR: {l},{c},{r} | idx: {idx} | L_speed: {left_speed:.2f}, R_speed: {right_speed:.2f} | Fitness: {fitness:.2f}")
+            # Calculating distance
+            current_left_position = left_position_sensor.getValue()
+            current_right_position = right_position_sensor.getValue()
+            delta_left = current_left_position - initial_left_position
+            delta_right = current_right_position - initial_right_position
+            # Distance per wheel
+            distance_left = delta_left * WHEEL_RADIUS
+            distance_right = delta_right * WHEEL_RADIUS
+            # AVG Distance
+            distance_traveled = (distance_left + distance_right) / 2.0
+            
+            print(f"[Robot] Step {step} | IR: {l},{c},{r} | idx: {idx} | L_speed: {left_speed:.2f}, R_speed: {right_speed:.2f} | Fitness: {fitness:.2f} | Distance: {distance_traveled:.2f}")
+        
+
         
         # Send fitness back to supervisor
-        msg = f"fitness:{fitness}"
+        msg = f"fitness:{fitness}, distance: {distance_traveled}"
         emitter.send(msg.encode("utf-8"))
         print("[Robot] Fitness sent back:", msg)
         loop_count += 1
@@ -125,7 +147,7 @@ def main_loop (generations, pop_size):
             print("[Robot] Closing ebuck controller.")
             break
     
-    # ——— Flushing logs ———
+    # Flushing logs
     log_file.flush()
     log_file.close()
 
