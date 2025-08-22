@@ -1,6 +1,8 @@
 ## Line Follower Robot (Webots) – Genetic Algorithm
 
-This project features a Webots simulation of a training setup for a line-following robot (E-puck) whose controller parameters are optimized using a Genetic Algorithm (GA). The robot runs a simple reactive controller (lookup table) that maps binary ground infrared sensor readings to wheel speeds. 
+This project involves training an e-puck robot using evolutionary computation, specifically Genetic Algorithms (GAs), to autonomously follow a path in a simulated environment.
+
+It features a Webots simulation of a training setup for a line-following robot (E-puck) whose controller parameters are optimized using a GA. The robot runs a simple reactive controller (lookup table) that maps binary ground infrared sensor readings to wheel speeds. 
 The GA evolves the speed pairs (genome) for each reading, according to the fitness received. The fitness is designed to maximize the speed at which the robot goes around the track. 
 
 It includes ready-to-run controllers, utilities, and a sample world for evaluating performance on a track.
