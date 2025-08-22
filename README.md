@@ -4,6 +4,9 @@ This project features a Webots simulation of a training setup for a line-followi
 The GA evolves the speed pairs (genome) for each reading, according to the fitness received. The fitness is designed to maximize the speed at which the robot goes around the track. 
 
 It includes ready-to-run controllers, utilities, and a sample world for evaluating performance on a track.
+<div align="center">
+  <img width="400" height="300" alt="image" src="https://github.com/user-attachments/assets/40360a25-42a3-4368-9045-11c362291982" />
+</div>  
 
 ### Key features
 - **Webots world** with an E-puck on a line track (`webots/worlds/line_tracking.wbt`).
@@ -51,6 +54,11 @@ requirements.txt                 # Python requirements for controllers
 - `- simple comms` variants: simplified communication, useful for debugging.
 - `rule_base/gp_controller - rule_base.py`: example non-evolutionary baseline.
 
+Here's a picture of the sensors' direction in the robot:
+<div align="center">
+<img width="350" height="250" alt="image" src="https://github.com/user-attachments/assets/2c75d793-c3a8-4abb-9467-c89eae09cbeb" />
+</div>
+
 ## Configuration
 Common parameters (population size, generations, timing, sensor threshold, genome size, logging paths, etc.) live in:
 ```
@@ -64,7 +72,7 @@ Adjust these before running if you want different experiment settings.
 - For faster runs, use the `no_logging` variants and reduce rendering quality or run with the fast mode in Webots.
 
 ## Citation
-If you use this project in academic work, please cite this repository. Example (update with your details):
+If you use this project in academic work, please cite this repository:
 ```
 @software{line_follower_webots,
   title = {Line Follower in Webots - GA Optimized Controller},
