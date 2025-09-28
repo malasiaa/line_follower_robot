@@ -11,11 +11,11 @@ It includes ready-to-run controllers, utilities, and a sample world for evaluati
 </div>  
 
 ### Key features
-- **Webots world** with an E-puck on a line track (`webots/worlds/line_tracking.wbt`).
+- **Webots world** with an E-puck on a line track (`worlds/line_tracking.wbt`).
 - **Controllers** for both evolutionary training and execution (with logging and without):
   - `gp_controller`: runs a genome-parameterized reactive controller on the robot.
   - `ga_supervisor`: evaluates populations, assigns genomes, and logs fitness.
-- **Utilities and config** in `webots/controllers/utils/` to adjust experiment settings.
+- **Utilities and config** in `controllers/utils/` to adjust experiment settings.
 
 ## Repository structure
 ```
@@ -79,6 +79,6 @@ If you use this project in academic work, please cite this repository:
 @software{line_follower_webots,
   title = {Line Follower in Webots - GA Optimized Controller},
   year = {2025},
-  url = {https://github.com/malasiaa/line_follower_mujoco}
+  url = {https://github.com/malasiaa/line_follower_robot}
 }
 ```
